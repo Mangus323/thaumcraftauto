@@ -1,35 +1,37 @@
-const aspects = new Map()
-
-
-class Aspect {
-    constructor(name: string, contains?: Array<Aspect>) {
+export class Aspect {
+    constructor(name: string, contains?: Array<Aspect | undefined>) {
         this.name = name
         if (contains === undefined) {
             this.base = true
             this.contains = null
         } else {
             this.base = false
+
             this.contains = contains
         }
 
     }
 
     name: string
-    contains: Array<Aspect> | null
+    contains: Array<Aspect | undefined> | null
     base: boolean
     contain = (aspect: Aspect) => {
         if (this.contains !== null) {
-            if (aspect.name === this.contains[0].name || aspect.name === this.contains[1].name) {
-                return true
+            if (this.contains[0] !== undefined && this.contains[1] !== undefined) {
+                if (aspect.name === this.contains[0].name || aspect.name === this.contains[1].name) {
+                    return true
+                }
             }
         }
         return false
     }
 }
 
-function generateAspects() {
+export let aspects: Map<string, Aspect> = new Map();
+
+export function generateAspects() {
     aspects.set("ignis", new Aspect("ignis"))
-    
+
     aspects.set("aqua", new Aspect("aqua"))
     aspects.set("aer", new Aspect("aer"))
     aspects.set("perditio", new Aspect("perditio"))
@@ -52,7 +54,7 @@ function generateAspects() {
     aspects.set("herba", new Aspect("herba", [aspects.get("terra"), aspects.get("victus")]))
     aspects.set("iter", new Aspect("iter", [aspects.get("motus"), aspects.get("terra")]))
     aspects.set("limus", new Aspect("limus", [aspects.get("aqua"), aspects.get("victus")]))
-    aspects.set("metallum", new Aspect("mettalum", [aspects.get("terra"), aspects.get("vitreus")]))
+    aspects.set("metallum", new Aspect("metallum", [aspects.get("terra"), aspects.get("vitreus")]))
     aspects.set("mortuus", new Aspect("mortuus", [aspects.get("perditio"), aspects.get("victus")]))
     aspects.set("praecantatio", new Aspect("praecantatio", [aspects.get("vacuos"), aspects.get("potentia")]))
     aspects.set("sano", new Aspect("sano", [aspects.get("ordo"), aspects.get("victus")]))
@@ -83,5 +85,5 @@ function generateAspects() {
     aspects.set("meto", new Aspect("meto", [aspects.get("instrumentum"), aspects.get("messis")]))
     aspects.set("pannus", new Aspect("pannus", [aspects.get("bestia"), aspects.get("instrumentum")]))
     aspects.set("telum", new Aspect("telum", [aspects.get("ignis"), aspects.get("instrumentum")]))
-    aspects.set("tutamen", new Aspect("auram", [aspects.get("terra"), aspects.get("instrumentum")]))
+    aspects.set("tutamen", new Aspect("tutamen", [aspects.get("terra"), aspects.get("instrumentum")]))
 }
