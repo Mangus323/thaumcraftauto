@@ -1,7 +1,8 @@
 import {app, BrowserWindow, ipcMain} from "electron"
 import * as path from "path"
 import {format as formatUrl} from "url"
-import {aspectsFromDisk, readScreen} from "./screen_capture";
+import {startScript} from "./screen_capture";
+import {aspectsFromDisk} from "./aspect_library";
 
 const isDevelopment = process.env.NODE_ENV !== "production"
 
@@ -19,15 +20,16 @@ function createMainWindow() {
     //Menu.setApplicationMenu(null)
     if (isDevelopment) {
         window.loadURL(`http://localhost:${process.env.ELECTRON_WEBPACK_WDS_PORT}`)
+            .catch(e => console.log(e))
     } else {
         window.loadURL(formatUrl({
             pathname: path.join(__dirname, "index.html"),
             protocol: "file",
             slashes: true
-        }))
+        })).catch(e => console.log(e))
     }
 
-    readScreen();
+    startScript();
 
 
     window.on("closed", () => {

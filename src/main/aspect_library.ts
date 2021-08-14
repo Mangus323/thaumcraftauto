@@ -1,3 +1,7 @@
+import Jimp from "jimp";
+import {PNG} from "pngjs";
+import pixelmatch from "pixelmatch";
+
 export class Aspect {
     constructor(name: string, contains?: Array<Aspect | undefined>) {
         this.name = name
@@ -26,6 +30,8 @@ export class Aspect {
         return false
     }
 }
+
+export let aspectsFromDisk: Map<string, Jimp> = new Map()
 
 export let aspects: Map<string, Aspect> = new Map();
 
@@ -86,4 +92,31 @@ export function generateAspects() {
     aspects.set("pannus", new Aspect("pannus", [aspects.get("bestia"), aspects.get("instrumentum")]))
     aspects.set("telum", new Aspect("telum", [aspects.get("ignis"), aspects.get("instrumentum")]))
     aspects.set("tutamen", new Aspect("tutamen", [aspects.get("terra"), aspects.get("instrumentum")]))
+}
+
+export async function getAspectsFromDisk() {
+    let array: Array<Aspect> = [];
+    aspects.forEach((item) => {
+        array.push(item)
+    });
+    for (let i = 0; i < array.length; i++) {
+        await setAspect(array[i]);
+    }
+
+    async function setAspect(item: any) {
+        let image = await Jimp.read(`images/aspects/${item.name}.png`)
+        aspectsFromDisk.set(item.name, image)
+
+    }
+}
+export async function compareImages(image: Jimp, mask: Jimp, aspectName: string) {
+    let aspect = aspectsFromDisk.get(aspectName)
+    //.write(`[${a},${b}].png`)
+    let diff = new PNG({width: 60, height: 60})
+    if (aspect !== undefined) {
+        return pixelmatch(
+            aspect.mask(mask, 0, 0).bitmap.data,
+            image.mask(mask, 0, 0).bitmap.data,
+            diff.data, 60, 60)
+    } else return -1
 }

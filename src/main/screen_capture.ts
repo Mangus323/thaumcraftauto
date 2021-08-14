@@ -1,115 +1,93 @@
 import Jimp from "jimp"
-import pixelmatch from "pixelmatch"
-import screenshot from "screenshot-desktop"
-import {aspects, generateAspects, Aspect} from "./aspect_library"
-import {PNG} from "pngjs";
-import fs from "fs"
+import scr from "screenshot-desktop"
+import {aspects, generateAspects, getAspectsFromDisk, compareImages} from "./aspect_library"
+import robot from "robotjs";
+import {constants as c} from "./number_constants";
 
-const interval = 64
-const baseX = 490
-const baseY = 185
-
-export let aspectsFromDisk: Map<string, Jimp> = new Map()
 export let rawAspect: Array<Array<Jimp>> = [];
 let aspectPosition = new Map()
 
-async function checkScreen(screenshot: Jimp) {
+async function checkScreen(screenshot: Jimp, times: number) {
     let fullscreen = screenshot.resize(1920, 1080)
     let mask = await Jimp.read("images/mask.png") // убрать числа
-    await compareAspects(fullscreen, mask)
-
+    await fillAspectTable(fullscreen, mask, times * 5)
 }
 
-async function compareAspects(fullscreen: Jimp, mask: Jimp) {
-    generateAspects()
-    await getAllAspects();
+async function fillAspectTable(fullscreen: Jimp, mask: Jimp, base: number) {
     let aspectsArray = [...aspects]
 
-    for (let i = 0; i < 5; i++) {
-        rawAspect[i] = [];
+    for (let i = 0; i < 5; i++) { //создает массив внутри rawAspects и заполняет его аспектами со скриншота
+        rawAspect[i + base] = [];
         for (let j = 0; j < 5; j++) {
-            rawAspect[i][j] = fullscreen
+            rawAspect[i + base][j] = fullscreen
                 .clone()
-                .crop(baseX + interval * i, baseY + interval * j, 60, 60)
+                .crop(c.table.x + c.interval * i, c.table.y + c.interval * j, 60, 60)
                 .mask(mask, 0, 0)
             //.write(`[${i}][${j}].png`)
-
         }
     }
 
     while (aspectsArray.length > 0) {
-        let min = 10000
-        let aspectPositionX = 0
-        let aspectPositionY = 0
-        let name;
+        if (aspectPosition.get(aspectsArray[0][1].name) !== undefined) {
+            if (aspectPosition.get(aspectsArray[0][1].name).diff == 0) {
+                aspectsArray.shift()
+            }
+        }
+
+        let min = 1000
+        let x = 0
+        let y = 0
         let dif = 1000;
 
-        for (let i = 0; i < 5; i++) {
+        for (let i = base; i < base + 5; i++) { // сравнивает объект скриншота и с диска
             for (let j = 0; j < 5; j++) {
                 let diff = await compareImages(rawAspect[i][j], mask, aspectsArray[0][1].name)
                     .catch(e => console.log(e))
                 if (typeof diff === "number") {
                     if (diff < min) {
-                        aspectPositionX = i
-                        aspectPositionY = j
+                        x = i
+                        y = j
                         min = diff
-                        name = aspectsArray[0][1].name
-                        dif = diff;
+                        dif = diff
                     }
                 }
             }
         }
         if (dif < 500) {
-            aspectPosition.set(aspectsArray[0][1].name, {x: aspectPositionX, y: aspectPositionY, name: name, diff: dif})
+            aspectPosition.set(aspectsArray[0][1].name, {
+                x: x, y: y, diff: dif
+            })
         }
         aspectsArray.shift()
     }
     console.log(aspectPosition);
+    console.log(aspectPosition.size);
 }
 
-async function getAllAspects() {
-    let array: Array<Aspect> = [];
-    aspects.forEach((item) => {
-        array.push(item)
-    });
-    for (let i = 0; i < array.length; i++) {
-        await setAspect(array[i]);
+async function indexingAspect() {
+    let pos = robot.getMousePos()
+    for (let i = 0; i < 2; i++) {
+        let screenshot = await scr({format: "png"})
+            .then((screenshot) => Jimp.read(screenshot))
+
+        await checkScreen(screenshot, i).catch(e => console.log(e))
+        robot.moveMouse(c.slide.right.x, c.slide.right.y)
+        robot.mouseClick("left")
+        robot.mouseClick("left")
+        robot.mouseClick("left")
+        robot.mouseClick("left")
+        robot.mouseClick("left")
     }
-
-    async function setAspect(item: any) {
-        let image = await Jimp.read(`images/aspects/${item.name}.png`)
-        aspectsFromDisk.set(item.name, image)
-
-    }
+    robot.moveMouse(pos.x, pos.y)
 }
 
-async function compareImages(image: Jimp, mask: Jimp, aspectName: string) {
-    let aspect = aspectsFromDisk.get(aspectName)
-    //.write(`[${a},${b}].png`)
-    let diff = new PNG({width: 60, height: 60})
-    if (aspect !== undefined) {
-        let number = pixelmatch(
-            aspect.mask(mask, 0, 0).bitmap.data,
-            image.mask(mask, 0, 0).bitmap.data,
-            diff.data, 60, 60,
-            {threshold: 0.05}) // я в душе не ебу как это работает
+export function startScript() {
+    generateAspects()
+    robot.setMouseDelay(0);
+    getAspectsFromDisk().then(() => {
+        //var screenSize = robot.getScreenSize();
+        //console.log(screenSize);
+        indexingAspect()
 
-        if (aspectName === "terra") {
-            fs.writeFileSync('diff.png', PNG.sync.write(diff));
-        }
-        return number
-    } else return -1
-
-}
-
-export function readScreen() {
-    screenshot({format: "png"}).then((screenshot) => {
-        Jimp.read(screenshot).then(screenshot => {
-            setTimeout(() => {
-                checkScreen(screenshot).catch(e => console.log(e))
-            }, 1000)
-
-
-        })
     })
 }

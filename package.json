@@ -14,6 +14,7 @@
     "pngjs": "^6.0.0",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
+    "robotjs": "^0.6.0",
     "screenshot-desktop": "^1.12.7",
     "source-map-support": "^0.5.16"
   },
@@ -26,6 +27,7 @@
     "@types/screenshot-desktop": "^1.12.0",
     "electron": "8.2.0",
     "electron-builder": "^22.4.1",
+    "electron-rebuild": "^3.1.1",
     "electron-webpack": "^2.8.2",
     "electron-webpack-ts": "^4.0.1",
     "typescript": "^4.3.5",
