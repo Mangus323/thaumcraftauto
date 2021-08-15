@@ -14,8 +14,8 @@ function createMainWindow() {
     //screen.getPrimaryDisplay().workAreaSize
     const window = new BrowserWindow({
         webPreferences: {nodeIntegration: true},
-        height: 600,
-        width: 800
+        height: 200,
+        width: 200
     })
     //Menu.setApplicationMenu(null)
     if (isDevelopment) {

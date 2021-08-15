@@ -1,5 +1,4 @@
 import Jimp from "jimp";
-import {PNG} from "pngjs";
 import pixelmatch from "pixelmatch";
 
 export class Aspect {
@@ -109,14 +108,24 @@ export async function getAspectsFromDisk() {
 
     }
 }
-export async function compareImages(image: Jimp, mask: Jimp, aspectName: string) {
+
+export function compareImages(images: Array<Jimp>): number {
+    return pixelmatch(
+        images[0].bitmap.data,
+        images[1].bitmap.data,
+        null, 60, 60)
+}
+
+export function compareWithAspect(image: Jimp, aspectName: string, masks?: Array<Jimp>): number {
     let aspect = aspectsFromDisk.get(aspectName)
-    //.write(`[${a},${b}].png`)
-    let diff = new PNG({width: 60, height: 60})
     if (aspect !== undefined) {
-        return pixelmatch(
-            aspect.mask(mask, 0, 0).bitmap.data,
-            image.mask(mask, 0, 0).bitmap.data,
-            diff.data, 60, 60)
-    } else return -1
+        if (masks !== undefined) {
+            for (const mask of masks) {
+                aspect.mask(mask, 0, 0)
+                image.mask(mask, 0, 0)
+            }
+        }
+        return compareImages([aspect, image])
+    } else
+        return -1
 }
