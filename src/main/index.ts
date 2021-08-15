@@ -1,8 +1,8 @@
 import {app, BrowserWindow, ipcMain} from "electron"
 import * as path from "path"
 import {format as formatUrl} from "url"
-import {startScript} from "./screen_capture";
 import {aspectsFromDisk} from "./aspect_library";
+import {startScript} from "./script";
 
 const isDevelopment = process.env.NODE_ENV !== "production"
 

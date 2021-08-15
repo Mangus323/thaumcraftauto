@@ -1,32 +1,38 @@
 import Jimp from "jimp"
 import scr from "screenshot-desktop"
-import {aspects, generateAspects, getAspectsFromDisk, compareWithAspect, compareImages} from "./aspect_library"
+import {aspects, compareWithAspect, compareImages} from "./aspect_library"
 import robot from "robotjs";
 import {constants as c} from "./number_constants";
+import {mouseSlide} from "./mouse_capture";
 
-let rawAspect: Array<Array<Jimp>> = [];
-let researchTableAspect: Array<Array<Jimp>> = [];
+let knowledgeAspects: Array<Array<Jimp>> = [];
+let researchTableAspect: Array<Array<{ image: Jimp, x?: number, y?: number, name?: string }>> = [];
 
-let researchTablePosition: Array<Array<Object>> = []
-let aspectPosition = new Map()
+let knowledgeAspectsArray: Map<string, any> = new Map()
 
-function repeat(func: Function, count: number, params?: Array<any>): void {
-    for (let i = 0; i < count; i++) {
-        if (params) {
-            func(...params);
-        } else {
-            func()
-        }
+export function knowledgeGetPosition(aspect: string): { x: number, y: number } {
+    let position = {x: -1, y: -1}
+    let aspectArray = knowledgeAspectsArray.get(aspect)
+    position.x = c.table.x + aspectArray.x * c.interval + 20
+    position.y = c.table.y + aspectArray.y * c.interval + 20
+    return position
+}
+
+export function researchGetPosition(x: number, y: number) {
+    return {
+        x: researchTableAspect[x][y].x,
+        y: researchTableAspect[x][y].y
     }
 }
+
 
 async function checkScreen(screenshot: Jimp, count: number) {
     let fullscreen = screenshot.resize(1920, 1080)
     let mask = await Jimp.read("images/mask.png") // убрать числа
-    await fillAspectTable(fullscreen, mask, count * 5)
+    await fillKnowledgeAspects(fullscreen, mask, count * 5)
 }
 
-async function fillResearchArray() {
+export async function fillResearchArray() {
     let screenshot = await scr({format: "png"})
     let research = (await Jimp.read(screenshot))
         .crop(c.research.x, c.research.y, c.research.w, c.research.h)
@@ -40,13 +46,6 @@ async function fillResearchArray() {
     firstPart() // нечетные столбцы
     secondPart() // четные
     fill()
-
-    // for (let i = 0; i < researchTablePosition.length; i++) {
-    //     for (let j = 0; j < researchTablePosition[i].length; j++) {
-    //         console.log(`${i} ${j} ${researchTablePosition[i][j]}`)
-    //     }
-    // }
-
 
     function firstPart() {
         for (let i = 0; i < 5; i++) {
@@ -63,13 +62,18 @@ async function fillResearchArray() {
                     default:
                         break;
                 }
-                researchTableAspect[i * 2][j] = research
-                    .clone()
-                    .crop(c.aspect.size * i + c.research.horizontal_interval * i,
-                        c.aspect.size * j + j * 2 + offset,
-                        c.aspect.size, c.aspect.size)
-                    .mask(masks[0], 0, 0)
-                    .mask(masks[1], 0, 0)
+                let x = c.aspect.size * i + c.research.horizontal_interval * i
+                let y = c.aspect.size * j + j * 2 + offset
+                researchTableAspect[i * 2][j] = {
+                    x, y,
+                    image: research
+                        .clone()
+                        .crop(x, y, c.aspect.size, c.aspect.size)
+                        .mask(masks[0], 0, 0)
+                        .mask(masks[1], 0, 0)
+                }
+
+
                 // .write(`test/[${i * 2}][${j}].png`)
             }
         }
@@ -93,13 +97,18 @@ async function fillResearchArray() {
                     default:
                         break
                 }
-                researchTableAspect[i * 2 + 1][j] = research
-                    .clone()
-                    .crop(c.research.offset.x + c.aspect.size * i + c.research.horizontal_interval * i,
-                        c.research.offset.y + c.aspect.size * j + j * 2 + offset,
-                        c.aspect.size, c.aspect.size)
-                    .mask(masks[0], 0, 0)
-                    .mask(masks[1], 0, 0)
+
+                let x = c.research.offset.x + c.aspect.size * i + c.research.horizontal_interval * i
+                let y = c.research.offset.y + c.aspect.size * j + j * 2 + offset
+
+                researchTableAspect[i * 2 + 1][j] = {
+                    x, y,
+                    image: research
+                        .clone()
+                        .crop(x, y, c.aspect.size, c.aspect.size)
+                        .mask(masks[0], 0, 0)
+                        .mask(masks[1], 0, 0)
+                }
                 //  .write(`test/[${i * 2 + 1}][${j}].png`)
             }
         }
@@ -107,14 +116,13 @@ async function fillResearchArray() {
 
     function fill() {
         for (let i = 0; i < 9; i++) { // сравнивает объект скриншота и с диска
-            researchTablePosition[i] = []
             for (let j = 0; j < 9; j++) {
                 if (i % 2 == 1 && j == 8) { // пропуск пустых ячеек
                     continue
                 }
 
-                if (compareImages([researchTableAspect[i][j], emptyAspect]) == 0) { // заполнение массива клетками без аспектов
-                    researchTablePosition[i][j] = "empty"
+                if (compareImages([researchTableAspect[i][j].image, emptyAspect]) == 0) { // заполнение массива клетками без аспектов
+                    researchTableAspect[i][j].name = "empty"
                     continue
                 }
 
@@ -122,27 +130,27 @@ async function fillResearchArray() {
                 let name = ""
 
                 for (let k = 0; k < aspectsArray.length; k++) {
-                    let diff = compareWithAspect(researchTableAspect[i][j], aspectsArray[k][1].name, masks)
+                    let diff = compareWithAspect(researchTableAspect[i][j].image, aspectsArray[k][1].name, masks)
                     if (diff < min) {
                         min = diff
                         name = aspectsArray[k][1].name
                     }
                 }
                 if (min < 400) {
-                    researchTablePosition[i][j] = `${name}+${min}`
+                    researchTableAspect[i][j].name = `${name}`
                 }
             }
         }
     }
 }
 
-async function fillAspectTable(fullscreen: Jimp, mask: Jimp, base: number) {
+async function fillKnowledgeAspects(fullscreen: Jimp, mask: Jimp, base: number) {
     let aspectsArray = [...aspects]
 
-    for (let i = 0; i < 5; i++) { //создает массив внутри rawAspects и заполняет его аспектами со скриншота
-        rawAspect[i + base] = [];
+    for (let i = 0; i < 5; i++) { //создает массив внутри knowledgeAspects и заполняет его аспектами со скриншота
+        knowledgeAspects[i + base] = [];
         for (let j = 0; j < 5; j++) {
-            rawAspect[i + base][j] = fullscreen
+            knowledgeAspects[i + base][j] = fullscreen
                 .clone()
                 .crop(c.table.x + c.interval * i, c.table.y + c.interval * j, 60, 60)
                 .mask(mask, 0, 0)
@@ -151,8 +159,8 @@ async function fillAspectTable(fullscreen: Jimp, mask: Jimp, base: number) {
     }
 
     while (aspectsArray.length > 0) {
-        if (aspectPosition.get(aspectsArray[0][1].name) !== undefined) {
-            if (aspectPosition.get(aspectsArray[0][1].name).diff == 0) {
+        if (knowledgeAspectsArray.get(aspectsArray[0][1].name) !== undefined) {
+            if (knowledgeAspectsArray.get(aspectsArray[0][1].name).diff == 0) {
                 aspectsArray.shift()
             }
         }
@@ -163,7 +171,7 @@ async function fillAspectTable(fullscreen: Jimp, mask: Jimp, base: number) {
 
         for (let i = base; i < base + 5; i++) { // сравнивает объекты скриншота и с диска
             for (let j = 0; j < 5; j++) {
-                let diff = compareWithAspect(rawAspect[i][j], aspectsArray[0][1].name, [mask])
+                let diff = compareWithAspect(knowledgeAspects[i][j], aspectsArray[0][1].name, [mask])
                 if (diff < min) {
                     x = i
                     y = j
@@ -172,7 +180,7 @@ async function fillAspectTable(fullscreen: Jimp, mask: Jimp, base: number) {
             }
         }
         if (min < 500) {
-            aspectPosition.set(aspectsArray[0][1].name, {
+            knowledgeAspectsArray.set(aspectsArray[0][1].name, {
                 x: x, y: y, diff: min
             })
         }
@@ -180,51 +188,30 @@ async function fillAspectTable(fullscreen: Jimp, mask: Jimp, base: number) {
     }
 }
 
-async function indexingAspect() {
+export async function indexingAspect() {
     let pos = robot.getMousePos()
     for (let i = 0; i < 2; i++) {
         let screenshot = await scr({format: "png"})
             .then((screenshot) => Jimp.read(screenshot))
 
-        await checkScreen(screenshot, i).catch(e => console.log(e))
-        robot.moveMouse(c.slide.right.x, c.slide.right.y)
-        repeat(robot.mouseClick, 5)
+        await checkScreen(screenshot, i)
+        mouseSlide("right", 5)
     }
-    robot.moveMouse(c.slide.left.x, c.slide.left.y)
-    repeat(robot.mouseClick, 5)
+    mouseSlide("left", 5)
 
     robot.moveMouse(pos.x, pos.y)
 
-    console.log(aspectPosition);
-    console.log(aspectPosition.size);
+    log()
 }
 
-export async function startScript() {
-    generateAspects()
-    robot.setMouseDelay(0);
+function log() {
+    console.log(knowledgeAspectsArray);
+    console.log(knowledgeAspectsArray.size);
 
-
-    // setTimeout(async () => {
-    //     robot.moveMouse(c.table.x + 10, c.table.y + 10)
-    //
-    //     await setTimeout(() => {
-    //         robot.mouseToggle("down")
-    //
-    //
-    //         setTimeout(() => {
-    //             robot.dragMouse(960, 260)
-    //             robot.mouseToggle("up")
-    //         }, 20)
-    //     }, 20)
-    //
-    //
-    // }, 2000)
-
-    getAspectsFromDisk().then(async () => {
-        await fillResearchArray()
-        //var screenSize = robot.getScreenSize();
-        //console.log(screenSize);
-        // await indexingAspect()
-    })
-
+    for (let i = 0; i < researchTableAspect.length; i++) {
+        for (let j = 0; j < researchTableAspect[i].length; j++) {
+            console.log(`${i} ${j} ${researchTableAspect[i][j].name}`)
+        }
+    }
 }
+
