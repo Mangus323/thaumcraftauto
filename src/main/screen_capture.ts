@@ -6,22 +6,34 @@ import {constants as c} from "./number_constants";
 import {mouseSlide} from "./mouse_capture";
 
 let knowledgeAspects: Array<Array<Jimp>> = [];
-let researchTableAspect: Array<Array<{ image: Jimp, x?: number, y?: number, name?: string }>> = [];
+let researchTableAspect: Array<Array<{ image: Jimp, x: number, y: number, name?: string }>> = [];
 
 let knowledgeAspectsArray: Map<string, any> = new Map()
 
-export function knowledgeGetPosition(aspect: string): { x: number, y: number } {
-    let position = {x: -1, y: -1}
+export function knowledgeGetPosition(aspect: string): { x: number, y: number, clicks: number } {
+    let value = {x: -1, y: -1, clicks: 0}
     let aspectArray = knowledgeAspectsArray.get(aspect)
-    position.x = c.table.x + aspectArray.x * c.interval + 20
-    position.y = c.table.y + aspectArray.y * c.interval + 20
-    return position
+
+    if (aspectArray.x < 5) {
+        value.x = c.table.x + aspectArray.x * c.interval + 30
+    } else {
+        value.clicks = aspectArray.x - 4
+        value.x = c.table.x + 4 * c.interval + 30
+    }
+    value.y = c.table.y + aspectArray.y * c.interval + 30
+    return value
 }
 
-export function researchGetPosition(x: number, y: number) {
+export function researchGetPosition(x: number, y: number): { x: number, y: number } {
+    if (researchTableAspect[x][y] !== undefined) {
+        if (researchTableAspect[x][y].x !== undefined && researchTableAspect[x][y].y !== undefined)
+            return {
+                x: researchTableAspect[x][y].x + c.research.x + 30,
+                y: researchTableAspect[x][y].y + c.research.y + 30
+            }
+    }
     return {
-        x: researchTableAspect[x][y].x,
-        y: researchTableAspect[x][y].y
+        x: -1, y: -1
     }
 }
 
@@ -199,19 +211,21 @@ export async function indexingAspect() {
     }
     mouseSlide("left", 5)
 
-    robot.moveMouse(pos.x, pos.y)
-
-    log()
+//    robot.moveMouse(pos.x, pos.y)
 }
 
-function log() {
-    console.log(knowledgeAspectsArray);
-    console.log(knowledgeAspectsArray.size);
-
-    for (let i = 0; i < researchTableAspect.length; i++) {
-        for (let j = 0; j < researchTableAspect[i].length; j++) {
-            console.log(`${i} ${j} ${researchTableAspect[i][j].name}`)
-        }
-    }
+export function log() {
+    // console.log(knowledgeAspectsArray);
+    // console.log(knowledgeAspectsArray.size);
+    //
+    // for (let i = 0; i < researchTableAspect.length; i++) {
+    //     for (let j = 0; j < researchTableAspect[i].length; j++) {
+    //         console.log(`${i} ${j} ${researchTableAspect[i][j].name}`)
+    //     }
+    // }
+    let pos = knowledgeGetPosition("potentia")
+    console.log(pos)
+    mouseSlide("right", pos.clicks)
+    robot.moveMouse(pos.x, pos.y)
 }
 

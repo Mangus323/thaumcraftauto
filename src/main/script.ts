@@ -1,6 +1,6 @@
 import {generateAspects, getAspectsFromDisk} from "./aspect_library";
 import robot from "robotjs";
-import {fillResearchArray, indexingAspect} from "./screen_capture";
+import {fillResearchArray, indexingAspect, log} from "./screen_capture";
 
 
 export async function startScript() {
@@ -11,6 +11,6 @@ export async function startScript() {
     await indexingAspect()
     await fillResearchArray()
 
-
+    log();
 
 }
