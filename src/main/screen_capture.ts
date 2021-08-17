@@ -237,8 +237,4 @@ export function log() {
     }
 
 }
-export async function move() {
-    await placeAspect(3, 5, "tempestas")
-    await placeAspect(2, 5, "bestia")
-}
 
