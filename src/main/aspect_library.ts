@@ -34,6 +34,25 @@ export let aspectsFromDisk: Map<string, Jimp> = new Map()
 
 export let aspects: Map<string, Aspect> = new Map();
 
+export function toHarder(aspect: string): string | false {
+    switch (aspect) {
+        case "aer":
+            return "arbor"
+        case "ordo":
+            return "vitreus"
+        case "terra":
+            return "victus"
+        case "perditio":
+            return "vacuos"
+        case "aqua":
+            return "victus"
+        case "ignis":
+            return "potentia"
+        default:
+            return false
+    }
+}
+
 export function generateAspects() {
     aspects.set("ignis", new Aspect("ignis"))
 

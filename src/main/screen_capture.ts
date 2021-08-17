@@ -3,10 +3,10 @@ import scr from "screenshot-desktop"
 import {aspects, compareWithAspect, compareImages} from "./aspect_library"
 import robot from "robotjs";
 import {constants as c} from "./number_constants";
-import {mouseSlide} from "./mouse_capture";
+import {getSlidePosition, mouseSlide, mouseToggle} from "./mouse_capture";
 
 let knowledgeAspects: Array<Array<Jimp>> = [];
-let researchTableAspect: Array<Array<{ image: Jimp, x: number, y: number, name?: string }>> = [];
+export let researchTableAspect: Array<Array<{ image: Jimp, x: number, y: number, name: string }>> = [];
 
 let knowledgeAspectsArray: Map<string, any> = new Map()
 
@@ -23,6 +23,21 @@ export function knowledgeGetPosition(aspect: string): { x: number, y: number, cl
     value.y = c.table.y + aspectArray.y * c.interval + 30
     return value
 }
+
+export async function placeAspect(aspect: {x: number, y: number, name: string}) {
+    let pos = researchGetPosition(aspect.x, aspect.y)
+    setPosition(aspect.name)
+
+    await mouseToggle(pos.x, pos.y)
+
+    function setPosition(aspect: string) {
+        let value = knowledgeGetPosition(aspect)
+        let pos = getSlidePosition()
+        mouseSlide(value.clicks - pos)
+        robot.moveMouse(value.x, value.y)
+    }
+}
+
 
 export function researchGetPosition(x: number, y: number): { x: number, y: number } {
     if (researchTableAspect[x][y] !== undefined) {
@@ -77,7 +92,7 @@ export async function fillResearchArray() {
                 let x = c.aspect.size * i + c.research.horizontal_interval * i
                 let y = c.aspect.size * j + j * 2 + offset
                 researchTableAspect[i * 2][j] = {
-                    x, y,
+                    x, y, name: "",
                     image: research
                         .clone()
                         .crop(x, y, c.aspect.size, c.aspect.size)
@@ -114,7 +129,7 @@ export async function fillResearchArray() {
                 let y = c.research.offset.y + c.aspect.size * j + j * 2 + offset
 
                 researchTableAspect[i * 2 + 1][j] = {
-                    x, y,
+                    x, y, name: "",
                     image: research
                         .clone()
                         .crop(x, y, c.aspect.size, c.aspect.size)
@@ -133,7 +148,7 @@ export async function fillResearchArray() {
                     continue
                 }
 
-                if (compareImages([researchTableAspect[i][j].image, emptyAspect]) == 0) { // заполнение массива клетками без аспектов
+                if (compareImages([researchTableAspect[i][j].image, emptyAspect]) < 100) { // заполнение массива клетками без аспектов
                     researchTableAspect[i][j].name = "empty"
                     continue
                 }
@@ -201,31 +216,29 @@ async function fillKnowledgeAspects(fullscreen: Jimp, mask: Jimp, base: number) 
 }
 
 export async function indexingAspect() {
-    let pos = robot.getMousePos()
     for (let i = 0; i < 2; i++) {
         let screenshot = await scr({format: "png"})
             .then((screenshot) => Jimp.read(screenshot))
 
         await checkScreen(screenshot, i)
-        mouseSlide("right", 5)
+        mouseSlide(5)
     }
-    mouseSlide("left", 5)
-
-//    robot.moveMouse(pos.x, pos.y)
+    mouseSlide(-10)
 }
 
 export function log() {
-    // console.log(knowledgeAspectsArray);
-    // console.log(knowledgeAspectsArray.size);
-    //
-    // for (let i = 0; i < researchTableAspect.length; i++) {
-    //     for (let j = 0; j < researchTableAspect[i].length; j++) {
-    //         console.log(`${i} ${j} ${researchTableAspect[i][j].name}`)
-    //     }
-    // }
-    let pos = knowledgeGetPosition("potentia")
-    console.log(pos)
-    mouseSlide("right", pos.clicks)
-    robot.moveMouse(pos.x, pos.y)
+    console.log(knowledgeAspectsArray);
+    console.log(knowledgeAspectsArray.size);
+
+    for (let i = 0; i < researchTableAspect.length; i++) {
+        for (let j = 0; j < researchTableAspect[i].length; j++) {
+            console.log(`${i} ${j} ${researchTableAspect[i][j].name}`)
+        }
+    }
+
+}
+export async function move() {
+    await placeAspect(3, 5, "tempestas")
+    await placeAspect(2, 5, "bestia")
 }
 
