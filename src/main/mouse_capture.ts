@@ -18,7 +18,7 @@ function repeat(func: Function, count: number, params?: Array<any>): void {
     }
 }
 
-export function mouseSlide(times?: number) {
+export function tableSlide(times?: number) {
     if (times === undefined) {
         times = 1
     }

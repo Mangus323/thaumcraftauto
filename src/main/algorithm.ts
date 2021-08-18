@@ -1,5 +1,5 @@
 import {researchTableAspect, placeAspect} from "./screen_capture";
-import {aspects, getAspect, toHarder} from "./aspect_library";
+import {aspectsGetArray, getAspect, toHarder} from "./aspect_library";
 
 type AspectPosition = {
     x: number,
@@ -21,14 +21,15 @@ export async function alg() {
     let names: Array<string> = []
     let tableAspects: Array<AspectPosition> = []
 
-    for (const aspectElement of aspects) {
+    for (const aspectElement of aspectsGetArray()) {
         names.push(aspectElement[1].name)
     }
 
-    let endPoints = getEndPoints()
+
     await fill()
 
-    for (let i = 0; i < 10 || tableAspects.length !== 0; i++) {
+    let endPoints = getEndPoints()
+    for (let i = 0; i < 10 && tableAspects.length !== 0; i++) {
         await iteration();
     }
 
@@ -54,10 +55,10 @@ export async function alg() {
             endPoints.forEach((point) => {
                 if (nextAspect.x === point.x && nextAspect.y === point.y) {
                     stop = true
+                    return
                 }
             })
             if (!stop) nextAspects.push(nextAspect)
-
         }
         tableAspects = nextAspects
     }
@@ -152,6 +153,6 @@ function getEndPoints(): Array<Point> {
 
         new Point(3, 5), // down
         new Point(4, 6),
-        new Point(3, 7),
+        new Point(5, 5),
     ]
 }

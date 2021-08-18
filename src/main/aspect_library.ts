@@ -12,34 +12,76 @@ export class Aspect {
 
             this.contains = contains
         }
-
     }
 
     name: string
     contains: Array<Aspect> | null
     base: boolean
-    contain = (aspect: Aspect) => {
+    contain = (aspect: string) => {
         if (this.contains !== null) {
-            if (this.contains[0] !== undefined && this.contains[1] !== undefined) {
-                if (aspect.name === this.contains[0].name || aspect.name === this.contains[1].name) {
-                    return true
-                }
-            }
+            return aspect === this.contains[0].name || aspect === this.contains[1].name
         }
         return false
     }
 }
+const aspects: Map<string, Aspect> = new Map();
 
 export const aspectsFromDisk: Map<string, Jimp> = new Map()
 
-export const aspects: Map<string, Aspect> = new Map();
+
+export function aspectsGetArray() {
+    return [...aspects]
+}
+
 export function getAspect(name: string): Aspect {
     let aspect = aspects.get(name)
-    if(aspect) {
+    if (aspect) {
         return aspect
     } else {
         return new Aspect("err")
     }
+}
+
+export function getLinks(aspect1: string, aspect2: string) {
+    let various: Array<Array<string>> = []
+    getPath(derivative(aspect1), aspect1, aspect2)
+    if (various.length === 0) {
+        getPath(derivative(aspect2), aspect2, aspect1)
+    }
+
+    various.sort((a, b) => { // сортировка по возрастанию количества
+        return a.length - b.length
+    })
+    return various
+
+    function getPath(aspects: Array<string>, from: string, to: string, path: Array<string> = [], done: boolean = false): {
+        done: boolean, path: Array<string>
+    } {
+        for (let i = 0; i < aspects.length; i++) {
+            if (aspects[i] === to) {
+                various.push(path)
+                return {path, done: true}
+            } else {
+                let next = derivative(aspects[i])
+                let res = (getPath((next), from, to, [...path, aspects[i]], done))
+                path.push(...res.path)
+                if (res.done) {
+                    return {path, done}
+                }
+            }
+        }
+        return {path: [], done: false}
+    }
+}
+
+function derivative(aspect: string): Array<string> {
+    let derivatives: Array<string> = []
+    aspects.forEach((item) => {
+        if (item.contain(aspect)) {
+            derivatives.push(item.name)
+        }
+    })
+    return derivatives
 }
 
 export function toHarder(aspect: string): string | false {
@@ -81,7 +123,7 @@ export function generateAspects() {
     aspects.set("victus", new Aspect("victus", [getAspect("terra"), getAspect("aqua")]))
     aspects.set("vitreus", new Aspect("vitreus", [getAspect("terra"), getAspect("ordo")]))
 
-    aspects.set("bestia", new Aspect("bestia", [getAspect("victus"), getAspect("terra")]))
+    aspects.set("bestia", new Aspect("bestia", [getAspect("victus"), getAspect("motus")]))
     aspects.set("fames", new Aspect("fames", [getAspect("vacuos"), getAspect("victus")]))
     aspects.set("herba", new Aspect("herba", [getAspect("terra"), getAspect("victus")]))
     aspects.set("iter", new Aspect("iter", [getAspect("motus"), getAspect("terra")]))

@@ -3,7 +3,7 @@ import scr from "screenshot-desktop"
 import {aspects, compareWithAspect, compareImages} from "./aspect_library"
 import robot from "robotjs";
 import {constants as c} from "./number_constants";
-import {getSlidePosition, mouseSlide, mouseToggle} from "./mouse_capture";
+import {getSlidePosition, tableSlide, mouseToggle} from "./mouse_capture";
 
 let knowledgeAspects: Array<Array<Jimp>> = [];
 export let researchTableAspect: Array<Array<{ image: Jimp, x: number, y: number, name: string }>> = [];
@@ -33,7 +33,7 @@ export async function placeAspect(aspect: {x: number, y: number, name: string}) 
     function setPosition(aspect: string) {
         let value = knowledgeGetPosition(aspect)
         let pos = getSlidePosition()
-        mouseSlide(value.clicks - pos)
+        tableSlide(value.clicks - pos)
         robot.moveMouse(value.x, value.y)
     }
 }
@@ -215,15 +215,15 @@ async function fillKnowledgeAspects(fullscreen: Jimp, mask: Jimp, base: number) 
     }
 }
 
-export async function indexingAspect() {
+export async function indexingKnowledgeAspects() {
     for (let i = 0; i < 2; i++) {
         let screenshot = await scr({format: "png"})
             .then((screenshot) => Jimp.read(screenshot))
 
         await checkScreen(screenshot, i)
-        mouseSlide(5)
+        tableSlide(5)
     }
-    mouseSlide(-10)
+    tableSlide(-10)
 }
 
 export function log() {
