@@ -1,7 +1,6 @@
 import {app, BrowserWindow, ipcMain} from "electron"
 import * as path from "path"
 import {format as formatUrl} from "url"
-import {aspectsFromDisk} from "./aspect_library";
 import {startScript} from "./script";
 
 const isDevelopment = process.env.NODE_ENV !== "production"
@@ -68,8 +67,8 @@ app.on("ready", () => {
 })
 
 
-ipcMain.on('asynchronous-message', (event, arg) => {
-    event.returnValue = aspectsFromDisk;
+ipcMain.on('asynchronous-message', (event) => {
+    event.returnValue = "aspectsImages;"
 })
 
 

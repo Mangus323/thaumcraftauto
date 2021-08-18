@@ -1,4 +1,4 @@
-import {researchTableAspect, placeAspect} from "./screen_capture";
+import {researchTable, placeAspect} from "./screen_capture";
 import {aspectsGetArray, getAspect, toHarder} from "./aspect_library";
 
 type AspectPosition = {
@@ -22,7 +22,7 @@ export async function alg() {
     let tableAspects: Array<AspectPosition> = []
 
     for (const aspectElement of aspectsGetArray()) {
-        names.push(aspectElement[1].name)
+        names.push(aspectElement[1].data.name)
     }
 
 
@@ -34,12 +34,12 @@ export async function alg() {
     }
 
     function fill() {
-        for (let i = 0; i < researchTableAspect.length; i++) {
-            for (let j = 0; j < researchTableAspect[i].length; j++) {
-                if (researchTableAspect[i][j] !== undefined) {
-                    if (names.includes(researchTableAspect[i][j].name)) {
+        for (let i = 0; i < researchTable.length; i++) {
+            for (let j = 0; j < researchTable[i].length; j++) {
+                if (researchTable[i][j] !== undefined) {
+                    if (names.includes(researchTable[i][j].name)) {
                         tableAspects.push({
-                            name: researchTableAspect[i][j].name, x: i, y: j
+                            name: researchTable[i][j].name, x: i, y: j
                         })
                     }
                 }
@@ -68,9 +68,9 @@ async function setAspect(tableAspect: AspectPosition): Promise<AspectPosition> {
     let steps: Array<Point> = []
 
     getStepPoints(tableAspect.x).forEach((item) => {
-        if (researchTableAspect[tableAspect.x + item.x]) {
-            if (researchTableAspect[tableAspect.x + item.x][tableAspect.y + item.y]) {
-                if (researchTableAspect[tableAspect.x + item.x][tableAspect.y + item.y].name === "empty") {
+        if (researchTable[tableAspect.x + item.x]) {
+            if (researchTable[tableAspect.x + item.x][tableAspect.y + item.y]) {
+                if (researchTable[tableAspect.x + item.x][tableAspect.y + item.y].name === "empty") {
                     steps.push(item)
                 }
             }

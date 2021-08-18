@@ -1,24 +1,18 @@
-import {getLinks, generateAspects, getAspectsFromDisk} from "./aspect_library";
+import {generateAspects} from "./aspect_library";
 import robot from "robotjs";
-import {fillResearchArray, indexingKnowledgeAspects} from "./screen_capture";
+import {fillResearchTable, fillKnowledgeTable} from "./screen_capture";
 import {alg} from "./algorithm";
 
 
 export async function startScript() {
-    generateAspects()
+    await fillArrays()
     robot.setMouseDelay(0)
 
-    await getAspectsFromDisk()
+    await alg();
+}
 
-    let a = getLinks("terra", "fabrico")
-    a.forEach((item) => {
-        console.log(item)
-    })
-    // await indexingKnowledgeAspects()
-    // await fillResearchArray()
-    // await alg();
-
-
-
-
+async function fillArrays() {
+    await generateAspects()
+    await fillKnowledgeTable()
+    await fillResearchTable()
 }
