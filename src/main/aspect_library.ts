@@ -26,6 +26,10 @@ export class Aspect {
 
 const aspects: Map<string, { data: Aspect, image?: Jimp }> = new Map();
 
+const primalAspects = ["terra", "aqua", "aer", "ignis", "perditio", "ordo"] // отсортированы в порядке ценности
+
+const primalAspectLinks: Map<string, Array<string>> = new Map() // кеш невозможных крафтов
+
 /**
  * Возвращает массив всех аспектов в коллекции
  * @return массив аспектов
@@ -46,6 +50,7 @@ export function getAspect(name: string): Aspect {
         return new Aspect("err")
     }
 }
+
 /**
  * Возвращает Jimp объект аспекта
  * @param name аспект
@@ -67,11 +72,34 @@ export function getAspectImage(name: string): Jimp | undefined {
  */
 export function getLinks(aspect1: string, aspect2: string): string[][] {
     let various: Array<Array<string>> = []
-    getPath(derivative(aspect1), aspect1, aspect2)
-    if (various.length === 0) {
-        getPath(derivative(aspect2), aspect2, aspect1)
+
+    getPath(aspect1, aspect2, various)
+
+    if (various.length === 0) { // наобарот
+        getPath(aspect2, aspect1, various)
         for (let i = 0; i < various.length; i++) { // сделать обратный порядок следования
             various[i] = various[i].reverse()
+        }
+    }
+
+    if (various.length === 0) { // более глубокий метод
+        if (primalAspects.includes(aspect1)) return various
+
+        for (const primalAspect of primalAspects) {
+            if (simplify(primalAspect, aspect1) && simplify(primalAspect, aspect2)) {
+                various = getLinks(aspect1, primalAspect)
+                let various2: typeof various = []
+                for (let i = 0; i < various.length; i++) {
+                    various[i].push(primalAspect)
+                    getPath(primalAspect, aspect2, various2, various[i])
+                }
+                various = various2
+                break
+            }
+        }
+
+        for (let i = 0; i < various.length; i++) {
+            removeExcess(various[i])
         }
     }
 
@@ -80,23 +108,55 @@ export function getLinks(aspect1: string, aspect2: string): string[][] {
     })
     return various
 
-    function getPath(aspects: Array<string>, from: string, to: string, path: Array<string> = [], done: boolean = false): { done: boolean, path: Array<string> } {
-        for (let i = 0; i < aspects.length; i++) {
-            if (aspects[i] === to) {
-                various.push(path)
-                return {path, done: true}
-            } else {
-                let next = derivative(aspects[i])
-                let res = (getPath((next), from, to, [...path, aspects[i]], done))
-                path.push(...res.path)
-                if (res.done) {
-                    return {path, done}
+    /**
+     * Удаляет из массива одинаковые вхождения, и все что между ними
+     * @param array Ссылка на массив
+     */
+    function removeExcess(array: Array<string>) {
+        for (let i = 0; i < array.length; i++) {
+            for (let j = 0; j < array.length; j++) {
+                let lastIndex = array.length - 1 - j
+                if (array[i] === array[lastIndex]) {
+                    let count = lastIndex - i
+                    array = array.splice(i + 1, count)
                 }
             }
         }
-        return {path: [], done: false}
     }
 
+
+    /**
+     * Заполняет внутренний массив всеми возможными односторонними цепями соединений аспектов
+     * @param from Приводимый аспект
+     * @param to Аспект, к которому приводят
+     * @param paths Ссылка на заполняемый массив
+     * @param path Изначальная цепь
+     */
+    function getPath(from: string, to: string, paths: Array<Array<string>>, path: Array<string> = []): Array<string> {
+        let aspects: Array<string>
+        if (path.length !== 0) {
+            aspects = derivative(path[path.length - 1])
+        } else {
+            aspects = derivative(from)
+        }
+
+        for (let i = 0; i < aspects.length; i++) {
+            if (aspects[i] === to) {
+                paths.push(path)
+                return []
+            } else {
+                let res = getPath(from, to, paths, [...path, aspects[i]])
+                path.push(...res)
+            }
+        }
+        return []
+    }
+
+    /**
+     * Возвращает все производные аспекта
+     * @param aspect Аспект
+     * @return Массив аспектов
+     */
     function derivative(aspect: string): Array<string> {
         let derivatives: Array<string> = []
         aspects.forEach((item) => {
@@ -105,6 +165,45 @@ export function getLinks(aspect1: string, aspect2: string): string[][] {
             }
         })
         return derivatives
+    }
+}
+
+export function simplify(primalAspect: string, aspect: string): boolean {
+    let allAspects = aspectsGetArray()
+    let array = getNotCraftableAspects(primalAspect)
+    for (const name of array) {
+        if (name === aspect) return false
+    }
+    return true
+
+    function getNotCraftableAspects(primalAspect: string): string[] {
+        let links = primalAspectLinks.get(primalAspect)
+        if (links) {
+            return links
+        }
+
+        if (primalAspects.includes(primalAspect)) {
+            let aspects = []
+            for (let i = 0; i < allAspects.length; i++) {
+                if (getLinks(primalAspect, allAspects[i][0]).length == 0) {
+                    aspects.push(allAspects[i][0])
+                }
+            }
+            primalAspectLinks.set(primalAspect, aspects) // кэширование из-за низкой скорости
+            return aspects
+        } else {
+            return []
+        }
+
+        // switch (primalAspect) {
+        //     case "perditio":
+        //         return ["lux", "motus", "potentia", "tempestas", "victus", "vitreus", "bestia", "herba", "iter", "limus", "metallum", "sano", "volatus", "arbor"]
+        //     case "aer":
+        //         return ["gelum", "permutatio", "potentia", "venenum", "victus", "vitreus", "herba", "limus", "metallum", "mortuus", "sano", "spiritus", "cognitio"]
+        //     case ""
+        //     default:
+        //         return []
+        // }
     }
 }
 

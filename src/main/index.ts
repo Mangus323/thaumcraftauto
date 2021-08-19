@@ -4,10 +4,10 @@ import {format as formatUrl} from "url"
 import {startScript} from "./script";
 
 const isDevelopment = process.env.NODE_ENV !== "production"
+startScript();
 
 // global reference to mainWindow (necessary to prevent window from being garbage collected)
 let mainWindow: BrowserWindow | null
-
 
 function createMainWindow() {
     //screen.getPrimaryDisplay().workAreaSize
@@ -28,7 +28,7 @@ function createMainWindow() {
         })).catch(e => console.log(e))
     }
 
-    startScript();
+//    startScript();
 
 
     window.on("closed", () => {
@@ -62,9 +62,9 @@ app.on("activate", () => {
 })
 
 // create main BrowserWindow when electron is ready
-app.on("ready", () => {
-    mainWindow = createMainWindow()
-})
+// app.on("ready", () => {
+//     mainWindow = createMainWindow()
+// })
 
 
 ipcMain.on('asynchronous-message', (event) => {

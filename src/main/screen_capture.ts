@@ -26,6 +26,7 @@ export async function placeAspect(point: { x: number, y: number }, name: string)
     let pos = researchGetPosition(point)
     setPosition(name)
     await mouseToggle(pos.x, pos.y)
+    researchTable[point.x][point.y].name = name
 
     function setPosition(aspect: string) { // наводит мышь на аспект
         let endPoint = knowledgeGetPosition(aspect)
@@ -196,6 +197,9 @@ export async function fillKnowledgeTable() {
             .then((screenshot) => Jimp.read(screenshot))
 
         await checkScreen(screenshot, mask, i)
+        if (knowledgeTable.size === 0) { // чтобы не двигалась мышь при ненайденном окне
+            return
+        }
         tableSlide(5)
     }
     tableSlide(-10)

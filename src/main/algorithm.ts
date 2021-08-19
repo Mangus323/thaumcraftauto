@@ -19,63 +19,100 @@ class Point {
 
 export async function alg() {
     let names: Array<string> = []
-    let tableAspects: Array<AspectPosition> = []
+    let paths: Array<Array<AspectPosition>> = []
 
     for (const aspectElement of aspectsGetArray()) {
         names.push(aspectElement[1].data.name)
     }
-
-
-    await fill()
-
+    generatePaths(paths)
     let endPoints = getEndPoints()
-    for (let i = 0; i < 10 && tableAspects.length !== 0; i++) {
-        await iteration();
-    }
+    //await pathsToCenter()
 
-    function fill() {
+
+
+    getWays(paths[0][0], paths[1][0])
+
+    function generatePaths(array: Array<Array<AspectPosition>>) {
         for (let i = 0; i < researchTable.length; i++) {
             for (let j = 0; j < researchTable[i].length; j++) {
                 if (researchTable[i][j] !== undefined) {
                     if (names.includes(researchTable[i][j].name)) {
-                        tableAspects.push({
+                        array.push([{
                             name: researchTable[i][j].name, x: i, y: j
-                        })
+                        }])
                     }
                 }
             }
         }
     }
 
-    async function iteration() {
-        let nextAspects: Array<AspectPosition> = []
-        for (const tableAspect of tableAspects) {
-            let nextAspect = await setAspect(tableAspect)
+    async function pathsToCenter() {
+        for (const path of paths) {
+            await moveToCenter(path)
+        }
+
+        async function moveToCenter(path: any): Promise<boolean> {
+            let nextAspect = await toCenter(path[path.length - 1])
             let stop = false
             endPoints.forEach((point) => {
                 if (nextAspect.x === point.x && nextAspect.y === point.y) {
+                    path.push(nextAspect)
                     stop = true
                     return
                 }
             })
-            if (!stop) nextAspects.push(nextAspect)
+            if (!stop) {
+                path.push(nextAspect)
+                if (await moveToCenter(path))
+                    return true
+            }
+            return false
         }
-        tableAspects = nextAspects
+    }
+
+    function getWays(aspect1: AspectPosition, aspect2: AspectPosition) {
+        let ways: Array<Array<Point>> = []
+        way(aspect1, aspect2, [])
+        ways.sort((a, b) => { // сортировка по возрастанию количества
+            return a.length - b.length
+        })
+
+        function way(point1: Point, point2: Point, path: Array<Point>): boolean {
+            //console.log(path[path.length - 1])
+            //console.log(path.length)
+
+            for (const stepPoint of getStepPoints(point1.x)) {
+                if (point1.x + stepPoint.x === point2.x && point1.y + stepPoint.y === point2.y) {
+                    ways.push(path)
+                }
+            }
+
+            for (const step of getSteps(point1)) {
+                let point = {x: point1.x + step.x, y: point1.y + step.y}
+
+                if (path.length > 5) {
+                    return false
+                }
+
+                let skip = false
+                for (let i = 0; i < path.length; i++) { // проверка на ход назад
+                    if (path[i].x === point.x && path[i].y === point.y) {
+                        skip = true
+                    }
+                }
+                if (skip) continue
+
+                if (way(point, point2, [...path, point])) {
+                    return true
+                }
+            }
+            return false
+        }
     }
 }
 
-async function setAspect(tableAspect: AspectPosition): Promise<AspectPosition> {
-    let steps: Array<Point> = []
-
-    getStepPoints(tableAspect.x).forEach((item) => {
-        if (researchTable[tableAspect.x + item.x]) {
-            if (researchTable[tableAspect.x + item.x][tableAspect.y + item.y]) {
-                if (researchTable[tableAspect.x + item.x][tableAspect.y + item.y].name === "empty") {
-                    steps.push(item)
-                }
-            }
-        }
-    })
+async function toCenter(tableAspect: AspectPosition): Promise<AspectPosition> {
+    let steps = getSteps(tableAspect)
     let step = getStep() // шаг к центру
 
     let aspectPosition: AspectPosition = {
@@ -84,7 +121,7 @@ async function setAspect(tableAspect: AspectPosition): Promise<AspectPosition> {
         name: getNextAspect(tableAspect.name)
     }
 
-    await placeAspect(aspectPosition)
+    await placeAspect({x: aspectPosition.x, y: aspectPosition.y}, aspectPosition.name)
     return aspectPosition
 
     function getStep(): Point {
@@ -114,6 +151,20 @@ async function setAspect(tableAspect: AspectPosition): Promise<AspectPosition> {
         }
         return ""
     }
+}
+
+function getSteps(point: Point): Array<Point> {
+    let steps: Array<Point> = []
+    getStepPoints(point.x).forEach((item) => {
+        if (researchTable[point.x + item.x]) {
+            if (researchTable[point.x + item.x][point.y + item.y]) {
+                if (researchTable[point.x + item.x][point.y + item.y].name === "empty") {
+                    steps.push(item)
+                }
+            }
+        }
+    })
+    return steps
 }
 
 function getStepPoints(x: number): Array<Point> {
