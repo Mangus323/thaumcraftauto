@@ -16,6 +16,16 @@ let knowledgeAspects: Array<Array<Jimp>> = [] // картинки со скри�
 let knowledgeTable: Map<string, Point & { diff: number }> = new Map() // коллекция значений
 export let researchTable: Array<Array<{ image: Jimp, x: number, y: number, name: string }>> = [];
 
+export async function placeWay(way: { path: Array<Point>, aspects: Array<string> }) {
+    let path = []
+    for (let i = 0; i < way.path.length; i++) {
+        let point = {x: way.path[i].x, y: way.path[i].y}
+        path.push({x: point.x, y: point.y, name: way.aspects[i]})
+        await placeAspect(point, way.aspects[i])
+    }
+    return path
+}
+
 
 /**
  * Ставит аспект определенных координатах
@@ -23,6 +33,10 @@ export let researchTable: Array<Array<{ image: Jimp, x: number, y: number, name:
  * @param name название аспекта
  */
 export async function placeAspect(point: { x: number, y: number }, name: string): Promise<void> {
+    if (name === undefined) {
+        return
+    }
+
     let pos = researchGetPosition(point)
     setPosition(name)
     await mouseToggle(pos.x, pos.y)

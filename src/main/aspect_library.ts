@@ -38,6 +38,27 @@ export function aspectsGetArray() {
     return [...aspects]
 }
 
+export function increaseLength(aspects: Array<string>, count: number): Array<string> {
+    let returnArray = [...aspects]
+    if (aspects.length === 0) return returnArray
+
+    if (aspects.length % 2 === count % 2) {
+        let times = count / aspects.length
+        for (let i = 0; i < times; i++) {
+            if (aspects.length >= 2) {
+                returnArray.push( // 2 последних аспекта
+                    aspects[aspects.length - 2],
+                    aspects[aspects.length - 1])
+            } else if (aspects.length == 1) {
+                returnArray.push(
+                    derivative(aspects[0])[0],
+                    aspects[aspects.length - 1])
+            }
+        }
+    }
+    return returnArray
+}
+
 /**
  * Возвращает объект класса Aspect строки
  * @param name аспект
@@ -151,21 +172,21 @@ export function getLinks(aspect1: string, aspect2: string): string[][] {
         }
         return []
     }
+}
 
-    /**
-     * Возвращает все производные аспекта
-     * @param aspect Аспект
-     * @return Массив аспектов
-     */
-    function derivative(aspect: string): Array<string> {
-        let derivatives: Array<string> = []
-        aspects.forEach((item) => {
-            if (item.data.contain(aspect)) {
-                derivatives.push(item.data.name)
-            }
-        })
-        return derivatives
-    }
+/**
+ * Возвращает все производные аспекта
+ * @param aspect Аспект
+ * @return Массив аспектов
+ */
+function derivative(aspect: string): Array<string> {
+    let derivatives: Array<string> = []
+    aspects.forEach((item) => {
+        if (item.data.contain(aspect)) {
+            derivatives.push(item.data.name)
+        }
+    })
+    return derivatives
 }
 
 export function simplify(primalAspect: string, aspect: string): boolean {
