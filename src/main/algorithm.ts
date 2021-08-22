@@ -1,5 +1,6 @@
-import {researchTable, placeWay} from "./screen_capture";
+import {researchTable} from "./screen_capture";
 import {aspectsGetArray, getLinks, increaseLength} from "./aspect_library";
+import {placeWay, tableSlide} from "./mouse_capture";
 
 type AspectPosition = {
     x: number,
@@ -39,6 +40,7 @@ export async function alg() {
         }
         paths = path2
     }
+    tableSlide() // восстановить положение
 
     /**
      * Возвращает лучшую цепь и соединяемые аспекты

@@ -9,7 +9,8 @@ export async function startScript() {
     robot.setMouseDelay(0)
 
     //console.log(getLinks("corpus", "praecantatio"))
-    await alg();
+    await alg()
+
 }
 
 async function fillArrays() {
