@@ -38,6 +38,12 @@ export function aspectsGetArray() {
     return [...aspects]
 }
 
+/**
+ * Возвращает массив с дополненными аспектами до количества
+ * @param aspects Массив аспектов
+ * @param count Нужное количество аспектов
+ * @return Массив аспектов
+ */
 export function increaseLength(aspects: Array<string>, count: number): Array<string> {
     let returnArray = [...aspects]
     if (aspects.length === 0) return returnArray
@@ -189,6 +195,11 @@ function derivative(aspect: string): Array<string> {
     return derivatives
 }
 
+/**
+ * Проверяет возможность создания из базового аспекта до нужного
+ * @param primalAspect Базовый аспект
+ * @param aspect Нужный аспект
+ */
 export function simplify(primalAspect: string, aspect: string): boolean {
     let allAspects = aspectsGetArray()
     let array = getNotCraftableAspects(primalAspect)

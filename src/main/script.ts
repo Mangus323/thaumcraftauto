@@ -8,7 +8,7 @@ export async function startScript() {
     await fillArrays()
     robot.setMouseDelay(0)
 
-    //console.log(getLinks("sensus", "alienis"))
+    //console.log(getLinks("corpus", "praecantatio"))
     await alg();
 }
 
