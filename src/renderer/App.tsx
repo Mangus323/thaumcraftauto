@@ -1,50 +1,37 @@
-import React from "react";
+import React, {useState} from "react";
 import {ipcRenderer} from "electron";
+import {constants as c} from "../number_constants"
 
 const App = () => {
+    let [image, setImage] = useState("")
 
-    let array: Array<any> = [];
-    for (let i = 0; i < 5; i++) {
-        for (let j = 0; j < 5; j++) {
-            array.push(
-                <img id={`img${i}${j}`}>
-
-                </img>
-            )
-        }
-    }
-
-    const click = () => {
+    const start = () => {
         let answer = ipcRenderer.sendSync('asynchronous-message', 'ping')
         console.log(answer);
 
-
-        for (let i = 0; i < 5; i++) {
-            for (let j = 0; j < 5; j++) {
-
-
-                let b64encoded = btoa(new Uint8Array(answer[i][j].bitmap.data).reduce(function (data, byte) {
-                    return data + String.fromCharCode(byte);
-                }, ''));
-                let img = document.getElementById(`img${i}${j}`)
-                // @ts-ignore
-                img.src = 'data:image/jpeg;base64,' + b64encoded
-            }
-
-        }
-
-
+    }
+    const restart = () => {
+        let answer = ipcRenderer.sendSync('asynchronous-message', 'ping')
+        let b64array = new Uint8Array(answer).reduce(function (data, byte) {
+            return data + String.fromCharCode(byte);
+        }, '')
+        setImage('data:image/jpeg;base64,' + btoa(b64array))
     }
 
-
-    return <div>
-
-
-        {...array}
-
-        <button onClick={click}> send</button>
+    return <div style={{display: "flex", flexDirection: "column", alignItems: "center"}}>
+        <div style={{padding: 3, backgroundColor: "black"}}>
+            <img id={"img"} src={image} alt={"image"}
+                 style={{width: c.research.w, height: c.research.h, display: "block", backgroundColor: "white"}}/>
+        </div>
+        <div>
+            <button onClick={start}>Start</button>
+            <button onClick={restart}>Restart</button>
+        </div>
     </div>
+
 }
 
 export default App
+
+
 

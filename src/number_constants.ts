@@ -3,7 +3,7 @@ export const constants = {
         size: 60
     },
     interval: 64,
-    table: {
+    knowledge: {
         x: 490,
         y: 185
     },

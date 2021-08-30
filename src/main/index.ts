@@ -1,10 +1,10 @@
-import {app, BrowserWindow, ipcMain} from "electron"
+import {app, BrowserWindow, ipcMain, Menu} from "electron"
 import * as path from "path"
 import {format as formatUrl} from "url"
 import {startScript} from "./script";
+import {preview} from "./screen_capture";
 
 const isDevelopment = process.env.NODE_ENV !== "production"
-startScript();
 
 // global reference to mainWindow (necessary to prevent window from being garbage collected)
 let mainWindow: BrowserWindow | null
@@ -13,10 +13,10 @@ function createMainWindow() {
     //screen.getPrimaryDisplay().workAreaSize
     const window = new BrowserWindow({
         webPreferences: {nodeIntegration: true},
-        height: 200,
-        width: 200
+        height: 680,
+        width: 600
     })
-    //Menu.setApplicationMenu(null)
+    Menu.setApplicationMenu(null)
     if (isDevelopment) {
         window.loadURL(`http://localhost:${process.env.ELECTRON_WEBPACK_WDS_PORT}`)
             .catch(e => console.log(e))
@@ -27,8 +27,6 @@ function createMainWindow() {
             slashes: true
         })).catch(e => console.log(e))
     }
-
-//    startScript();
 
 
     window.on("closed", () => {
@@ -61,14 +59,17 @@ app.on("activate", () => {
     }
 })
 
-// create main BrowserWindow when electron is ready
-// app.on("ready", () => {
-//     mainWindow = createMainWindow()
-// })
+//create main BrowserWindow when electron is ready
+app.on("ready", () => {
+    mainWindow = createMainWindow()
+})
 
 
+let clicked = 0
 ipcMain.on('asynchronous-message', (event) => {
-    event.returnValue = "aspectsImages;"
+    startScript(clicked++)
+        .then(() => event.returnValue = preview)
+        .catch(e => event.returnValue = e)
 })
 
 

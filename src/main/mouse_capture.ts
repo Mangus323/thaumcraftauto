@@ -1,5 +1,5 @@
 import robot from "robotjs"
-import {constants as c} from "./number_constants";
+import {constants as c} from "../number_constants";
 import {knowledgeTable, Point, researchTable} from "./screen_capture";
 
 const interval = 60 // интервал в мс между действиями мыши
@@ -126,12 +126,12 @@ export async function placeAspect(point: { x: number, y: number }, name: string)
         let position = knowledgeTable.get(aspect)
         if (position !== undefined) {
             if (position.x < 5) {
-                value.point.x = c.table.x + position.x * c.interval + 30
+                value.point.x = c.knowledge.x + position.x * c.interval + 30
             } else {
                 value.clicks = position.x - 4
-                value.point.x = c.table.x + 4 * c.interval + 30
+                value.point.x = c.knowledge.x + 4 * c.interval + 30
             }
-            value.point.y = c.table.y + position.y * c.interval + 30
+            value.point.y = c.knowledge.y + position.y * c.interval + 30
         }
         return value
     }

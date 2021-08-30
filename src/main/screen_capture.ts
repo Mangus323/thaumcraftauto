@@ -1,6 +1,6 @@
-import Jimp from "jimp"
+import Jimp, {MIME_PNG} from "jimp"
 import scr from "screenshot-desktop"
-import {constants as c} from "./number_constants";
+import {constants as c} from "../number_constants";
 import {tableSlide} from "./mouse_capture";
 import {aspectsGetArray} from "./aspect_library";
 import {compareImages, compareWithAspect} from "./image";
@@ -15,13 +15,18 @@ let knowledgeAspects: Array<Array<Jimp>> = [] // картинки со скри�
 export let knowledgeTable: Map<string, Point & { diff: number }> = new Map() // коллекция значений
 export let researchTable: Array<Array<{ image: Jimp, x: number, y: number, name: string }>> = [];
 
+export let preview: Buffer
+
 /**
  * Заполняет массив свитка изучений
  */
 export async function fillResearchTable() {
+    researchTable = [] // очистить перед повторным использованием
     let screenshot = await scr({format: "png"})
     let research = (await Jimp.read(screenshot))
         .crop(c.research.x, c.research.y, c.research.w, c.research.h)
+
+    preview = await research.clone().getBufferAsync(MIME_PNG)
 
     let masks: Array<Jimp> = [];
     masks[0] = await Jimp.read("images/research_mask.png")
@@ -29,11 +34,11 @@ export async function fillResearchTable() {
     let emptyAspect = await Jimp.read("images/empty_aspect.png")
 
     let aspectsArray = aspectsGetArray()
-    firstPart() // нечетные столбцы
-    secondPart() // четные
+    notEven() // нечетные столбцы
+    Even() // четные
     fill()
 
-    function firstPart() {
+    function notEven() {
         for (let i = 0; i < 5; i++) {
             researchTable[i * 2] = [];
             let offset = 0 // смещение сетки при высоком разрешении
@@ -65,7 +70,7 @@ export async function fillResearchTable() {
         }
     }
 
-    function secondPart() {
+    function Even() {
         for (let i = 0; i < 4; i++) {
             researchTable[i * 2 + 1] = [];
             let offset = 0 // смещение сетки при высоком разрешении
@@ -140,7 +145,7 @@ export async function fillKnowledgeTable() {
             .then((screenshot) => Jimp.read(screenshot))
 
         await checkScreen(screenshot, mask, i)
-        if (knowledgeTable.size === 0) { // чтобы не двигалась мышь при ненайденном окне
+        if (knowledgeTable.size < 5) { // чтобы не двигалась мышь при ненайденном окне
             return
         }
         tableSlide(5)
@@ -170,7 +175,7 @@ export async function fillKnowledgeTable() {
             for (let j = 0; j < 5; j++) {
                 knowledgeAspects[i + base][j] = screenshot
                     .clone()
-                    .crop(c.table.x + c.interval * i, c.table.y + c.interval * j, 60, 60)
+                    .crop(c.knowledge.x + c.interval * i, c.knowledge.y + c.interval * j, 60, 60)
                     .mask(mask, 0, 0)
                 //.write(`[${i}][${j}].png`)
             }
