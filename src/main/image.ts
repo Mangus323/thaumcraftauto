@@ -21,8 +21,9 @@ export function compareImages(images: Array<Jimp>): number {
  * @return {number} разница
  */
 export function compareWithAspect(image: Jimp, name: string, masks?: Array<Jimp>): number {
-    let aspect = getAspectImage(name)
-    if (aspect !== undefined) {
+    let ref = getAspectImage(name)
+    if (ref !== undefined) {
+        let aspect = ref.clone()
         if (masks !== undefined) {
             for (const mask of masks) {
                 aspect.mask(mask, 0, 0)
@@ -31,6 +32,6 @@ export function compareWithAspect(image: Jimp, name: string, masks?: Array<Jimp>
         }
         return compareImages([aspect, image])
     }
-
     return 10000
 }
+

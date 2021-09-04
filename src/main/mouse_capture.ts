@@ -1,9 +1,10 @@
 import robot from "robotjs"
 import {constants as c} from "../number_constants";
-import {knowledgeTable, Point, researchTable} from "./screen_capture";
+import {knowledgeTable, Point, researchGetPosition, researchTable} from "./screen_capture";
 
 const interval = 60 // интервал в мс между действиями мыши
 let tablePosition = 0 // позиция сдвига таблицы
+
 
 export function getTablePosition(): number {
     return tablePosition
@@ -83,14 +84,14 @@ export async function mouseToggle(x2: number, y2: number, x1?: number, y1?: numb
  * @param point координата
  * @param name название аспекта
  */
-export async function placeAspect(point: { x: number, y: number }, name: string): Promise<void> {
+export async function placeAspect(point: Point, name: string): Promise<void> {
     if (name === undefined) {
         return
     }
 
     let pos = researchGetPosition(point)
     setPosition(name)
-    await mouseToggle(pos.x, pos.y)
+    await mouseToggle(pos.x + 30, pos.y + 30) // в центр аспекта
     researchTable[point.x][point.y].name = name
 
     function setPosition(aspect: string) { // наводит мышь на аспект
@@ -98,23 +99,6 @@ export async function placeAspect(point: { x: number, y: number }, name: string)
         let pos = getTablePosition()
         tableSlide(endPoint.clicks - pos) // двигается на минимальное необходимое значение
         robot.moveMouse(endPoint.point.x, endPoint.point.y)
-    }
-
-    /**
-     * Возвращает точные координаты в пикселях по точке в массиве свитка изучений
-     * @param point точка
-     */
-    function researchGetPosition(point: Point): Point {
-        if (researchTable[point.x][point.y] !== undefined) {
-            if (researchTable[point.x][point.y].x !== undefined && researchTable[point.x][point.y].y !== undefined)
-                return {
-                    x: researchTable[point.x][point.y].x + c.research.x + 30,
-                    y: researchTable[point.x][point.y].y + c.research.y + 30
-                }
-        }
-        return {
-            x: -1, y: -1
-        }
     }
 
     /**
@@ -137,16 +121,8 @@ export async function placeAspect(point: { x: number, y: number }, name: string)
     }
 }
 
-/**
- * Ставит цепь аспектов
- * @param way Цепь аспектов
- */
-export async function placeWay(way: { path: Array<Point>, aspects: Array<string> }) {
-    let path = []
-    for (let i = 0; i < way.path.length; i++) {
-        let point = {x: way.path[i].x, y: way.path[i].y}
-        path.push({x: point.x, y: point.y, name: way.aspects[i]})
-        await placeAspect(point, way.aspects[i])
+export async function placeAll(way: any) {
+    for (const wayElement of way) {
+        await placeAspect(wayElement.point, wayElement.name)
     }
-    return path
 }

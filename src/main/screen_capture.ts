@@ -1,9 +1,10 @@
-import Jimp, {MIME_PNG} from "jimp"
+import Jimp from "jimp"
 import scr from "screenshot-desktop"
 import {constants as c} from "../number_constants";
 import {tableSlide} from "./mouse_capture";
 import {aspectsGetArray} from "./aspect_library";
 import {compareImages, compareWithAspect} from "./image";
+import {setPreview} from "./preview";
 
 
 export type Point = {
@@ -15,7 +16,6 @@ let knowledgeAspects: Array<Array<Jimp>> = [] // картинки со скри�
 export let knowledgeTable: Map<string, Point & { diff: number }> = new Map() // коллекция значений
 export let researchTable: Array<Array<{ image: Jimp, x: number, y: number, name: string }>> = [];
 
-export let preview: Buffer
 
 /**
  * Заполняет массив свитка изучений
@@ -26,7 +26,7 @@ export async function fillResearchTable() {
     let research = (await Jimp.read(screenshot))
         .crop(c.research.x, c.research.y, c.research.w, c.research.h)
 
-    preview = await research.clone().getBufferAsync(MIME_PNG)
+    setPreview(await research.clone())
 
     let masks: Array<Jimp> = [];
     masks[0] = await Jimp.read("images/research_mask.png")
@@ -35,7 +35,7 @@ export async function fillResearchTable() {
 
     let aspectsArray = aspectsGetArray()
     notEven() // нечетные столбцы
-    Even() // четные
+    even() // четные
     fill()
 
     function notEven() {
@@ -70,7 +70,7 @@ export async function fillResearchTable() {
         }
     }
 
-    function Even() {
+    function even() {
         for (let i = 0; i < 4; i++) {
             researchTable[i * 2 + 1] = [];
             let offset = 0 // смещение сетки при высоком разрешении
@@ -213,6 +213,23 @@ export async function fillKnowledgeTable() {
             }
             aspectsArray.shift()
         }
+    }
+}
+
+/**
+ * Возвращает точные координаты в пикселях по точке в массиве свитка изучений
+ * @param point точка
+ */
+export function researchGetPosition(point: Point): Point {
+    if (researchTable[point.x][point.y] !== undefined) {
+        if (researchTable[point.x][point.y].x !== undefined && researchTable[point.x][point.y].y !== undefined)
+            return {
+                x: researchTable[point.x][point.y].x + c.research.x,
+                y: researchTable[point.x][point.y].y + c.research.y
+            }
+    }
+    return {
+        x: -1, y: -1
     }
 }
 

@@ -2,7 +2,7 @@ import {app, BrowserWindow, ipcMain, Menu} from "electron"
 import * as path from "path"
 import {format as formatUrl} from "url"
 import {startScript} from "./script";
-import {preview} from "./screen_capture";
+import {getBuffer} from "./preview";
 
 const isDevelopment = process.env.NODE_ENV !== "production"
 
@@ -68,8 +68,12 @@ app.on("ready", () => {
 let clicked = 0
 ipcMain.on('asynchronous-message', (event) => {
     startScript(clicked++)
-        .then(() => event.returnValue = preview)
-        .catch(e => event.returnValue = e)
+        .then(getBuffer)
+        .then(e => event.returnValue = e)
+        .catch(e => {
+            console.log(e)
+            event.returnValue = "err"
+        })
 })
 
 

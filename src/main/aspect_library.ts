@@ -226,16 +226,6 @@ export function simplify(primalAspect: string, aspect: string): boolean {
         } else {
             return []
         }
-
-        // switch (primalAspect) {
-        //     case "perditio":
-        //         return ["lux", "motus", "potentia", "tempestas", "victus", "vitreus", "bestia", "herba", "iter", "limus", "metallum", "sano", "volatus", "arbor"]
-        //     case "aer":
-        //         return ["gelum", "permutatio", "potentia", "venenum", "victus", "vitreus", "herba", "limus", "metallum", "mortuus", "sano", "spiritus", "cognitio"]
-        //     case ""
-        //     default:
-        //         return []
-        // }
     }
 }
 

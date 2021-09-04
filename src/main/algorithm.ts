@@ -1,10 +1,8 @@
 import {researchTable} from "./screen_capture";
 import {aspectsGetArray, getLinks, increaseLength} from "./aspect_library";
-import {placeWay, tableSlide} from "./mouse_capture";
 
 type AspectPosition = {
-    x: number,
-    y: number,
+    point: Point
     name: string
 }
 
@@ -22,6 +20,8 @@ export async function alg() {
     let names: Array<string> = []
     let paths: Array<Array<AspectPosition>> = []
 
+    let returnValue: Array<{ point: Point, name: string }> = []
+
     for (const aspectElement of aspectsGetArray()) {
         names.push(aspectElement[1].data.name)
     }
@@ -29,8 +29,9 @@ export async function alg() {
 
     while (paths.length > 1) {
         let {way, position} = getBestWay(paths)
+        returnValue.push(...way)
 
-        paths[position.x].push(...(await placeWay(way))) // ставит цепочку и добавляет ее в массив
+        paths[position.x].push(...way) // ставит цепочку и добавляет ее в массив ???
         paths[position.x].push(...paths[position.y]) // добавляет в первую цепочку вторую и убирает 2
 
         let path2 = [] // кастыль
@@ -40,14 +41,15 @@ export async function alg() {
         }
         paths = path2
     }
-    tableSlide() // восстановить положение
+    //tableSlide() // восстановить положение
+    return returnValue
 
     /**
      * Возвращает лучшую цепь и соединяемые аспекты
      * @param paths Текущие цепи
      */
     function getBestWay(paths: Array<Array<AspectPosition>>) {
-        let way: { path: Array<Point>, aspects: Array<string> } = {path: [], aspects: []}
+        let objectWay: { path: Array<Point>, aspects: Array<string> } = {path: [], aspects: []}
         let max = 100
         let position = {x: -1, y: -1}
         for (let i = 0; i < paths.length; i++) {
@@ -56,17 +58,26 @@ export async function alg() {
 
                 let res = getWay(paths[i], paths[j], max)
                 if (res.way) {
-                    way = res.way
+                    objectWay = res.way
                     max = res.max
                     position.x = i
                     position.y = j
-                    max = way.path.length
+                    max = objectWay.path.length
                 }
             }
         }
 
-        way.aspects = increaseLength(way.aspects, way.path.length)
-        return {way, position}
+        objectWay.aspects = increaseLength(objectWay.aspects, objectWay.path.length)
+        return {way: toArray(objectWay), position}
+
+        function toArray(way: typeof objectWay): Array<{ point: Point, name: string }> {
+            let returnValue = []
+            for (let i = 0; i < way.path.length; i++) {
+                let point = {x: way.path[i].x, y: way.path[i].y}
+                returnValue.push({point: point, name: way.aspects[i]})
+            }
+            return returnValue
+        }
 
         /**
          * Пытается найти самую ближайшую цепь между 2 точками
@@ -83,7 +94,7 @@ export async function alg() {
                     let pathElement2 = aspectPositions2[j]
 
                     let paths = getPath(pathElement1, pathElement2)
-                    if(paths.length === 0) {
+                    if (paths.length === 0) {
                         paths = getPath(pathElement1, pathElement2, 8) // намного медленнее
                     }
                     let links = getLinks(pathElement1.name, pathElement2.name)
@@ -182,7 +193,7 @@ export async function alg() {
                 if (researchTable[i][j] !== undefined) {
                     if (names.includes(researchTable[i][j].name)) {
                         array.push([{
-                            name: researchTable[i][j].name, x: i, y: j
+                            name: researchTable[i][j].name, point: {x: i, y: j}
                         }])
                     }
                 }
@@ -199,7 +210,7 @@ export async function alg() {
      */
     function getPath(aspect1: AspectPosition, aspect2: AspectPosition, max: number = 5): Array<Array<Point>> {
         let ways: Array<Array<Point>> = []
-        way(aspect1, aspect2, ways)
+        way(aspect1.point, aspect2.point, ways)
         ways.sort((a, b) => { // сортировка по возрастанию количества
             return a.length - b.length
         })
@@ -244,48 +255,6 @@ export async function alg() {
         }
     }
 }
-
-// async function toCenter(tableAspect: AspectPosition): Promise<AspectPosition> {
-//     let steps = getSteps(tableAspect)
-//     let step = getStep() // шаг к центру
-//
-//     let aspectPosition: AspectPosition = {
-//         x: tableAspect.x + step.x,
-//         y: tableAspect.y + step.y,
-//         name: getNextAspect(tableAspect.name)
-//     }
-//
-//     await placeAspect({x: aspectPosition.x, y: aspectPosition.y}, aspectPosition.name)
-//     return aspectPosition
-//
-//     function getStep(): Point {
-//         let difference: Array<number> = []
-//         steps.forEach((item) => {
-//             let x = tableAspect.x + item.x - 4
-//             if (x < 0) x = -x
-//             let y = tableAspect.y + item.y - 4
-//             if (y < 0) y = -y
-//             difference.push(x + y)
-//         })
-//
-//         return steps[difference.indexOf(Math.min(...difference))]
-//     }
-//
-//     function getNextAspect(name: string): string {
-//         let aspect = getAspect(name)
-//         if (aspect.name !== "err") {
-//             let harder = toHarder(aspect.name)
-//             if (harder) {
-//                 return harder
-//             }
-//             if (aspect.contains) {
-//                 if (aspect.contains[0])
-//                     return aspect.contains[0].name
-//             }
-//         }
-//         return ""
-//     }
-// }
 
 /**
  * Возвращает возможные шаги для движения в столе изучения

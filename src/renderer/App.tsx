@@ -18,17 +18,18 @@ const App = () => {
         setImage('data:image/jpeg;base64,' + btoa(b64array))
     }
 
-    return <div style={{display: "flex", flexDirection: "column", alignItems: "center"}}>
-        <div style={{padding: 3, backgroundColor: "black"}}>
-            <img id={"img"} src={image} alt={"image"}
-                 style={{width: c.research.w, height: c.research.h, display: "block", backgroundColor: "white"}}/>
+    return (
+        <div style={{display: "flex", flexDirection: "column", alignItems: "center"}}>
+            <div style={{padding: 3, backgroundColor: "black"}}>
+                <img id={"img"} src={image} alt={"image"}
+                     style={{width: c.research.w, height: c.research.h, display: "block", backgroundColor: "white"}}/>
+            </div>
+            <div>
+                <button onClick={start}>Start</button>
+                <button onClick={restart}>Restart</button>
+            </div>
         </div>
-        <div>
-            <button onClick={start}>Start</button>
-            <button onClick={restart}>Restart</button>
-        </div>
-    </div>
-
+    )
 }
 
 export default App
